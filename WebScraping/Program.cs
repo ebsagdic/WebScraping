@@ -1,5 +1,6 @@
 using FluentValidation;
 using FluentValidation.AspNetCore;
+using Hangfire;
 using Microsoft.EntityFrameworkCore;
 using WebScraping.Core.Repositories;
 using WebScraping.Core.Services;
@@ -23,16 +24,22 @@ builder.Services.AddEndpointsApiExplorer();
 
 builder.Services.AddAutoMapper(typeof(MapProfile));
 
+builder.Services.AddHangfire(x => x.UseSqlServerStorage(builder.Configuration.GetConnectionString("DefaultConnection")));
+builder.Services.AddHangfireServer();
+
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddScoped<IOrderRepository, OrderRepository>();
+builder.Services.AddScoped<ITrackingService, TrackingService>();
 
 builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
+
+app.UseHangfireDashboard();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -46,5 +53,8 @@ app.UseHttpsRedirection();
 app.UseAuthorization();
 
 app.MapControllers();
+
+RecurringJob.AddOrUpdate<ITrackingService>("UpdateOrderStatuses",
+    service => service.UpdateAllStatusesAsync(), "0 */10 * * * *");
 
 app.Run();
