@@ -13,7 +13,6 @@ namespace WebScraping.Core.Services
         Task<CustomResponseDto<OrderDto>> GetByIdAsync(int id);
         Task<CustomResponseDto<IEnumerable<OrderDto>>> GetAllAsync();
         Task<CustomResponseDto<CreateOrderDto>> AddAsync(CreateOrderDto order);
-        Task<CustomResponseDto<NoContentDto>> Update(OrderDto order);
         Task<CustomResponseDto<NoContentDto>> Remove(OrderDto order);
     }
 }
