@@ -38,13 +38,6 @@ namespace WebScraping.Controllers
             return ActionResultInstance(response);
         }
 
-        [HttpPut]
-        public async Task<IActionResult> Update([FromBody] OrderDto orderDto)
-        {
-            var response = await _orderService.Update(orderDto);
-            return ActionResultInstance(response);
-        }
-
         [HttpDelete]
         public async Task<IActionResult> Delete(int id)
         {

@@ -1,13 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿
 using WebScraping.Core.Repositories;
 using WebScraping.Core.Services;
 using System.Net.Http;
 using HtmlAgilityPack;
 using WebScraping.Core.UnitOfWork;
+using OpenQA.Selenium.Chrome;
+using OpenQA.Selenium;
 
 namespace WebScraping.Service
 {
@@ -42,42 +40,32 @@ namespace WebScraping.Service
 
         public async Task<string> GetTrackingStatusAsync(string trackingNumber)
         {
-            var url = "https://gonderitakip.ptt.gov.tr/";
-            using var httpClient = new HttpClient();
+            using var driver = new ChromeDriver();
 
-            var content = new FormUrlEncodedContent(new Dictionary<string, string>
+            try
             {
-                { "trackingNumber",trackingNumber }
-            });
+                driver.Navigate().GoToUrl("https://gonderitakip.ptt.gov.tr/");
 
-            var response = await httpClient.PostAsync(url, content);
-            if (!response.IsSuccessStatusCode)
-            {
-                return "Error: Unable to connect to the tracking service.";
+                var inputField = driver.FindElement(By.Id("search-area"));
+                inputField.SendKeys(trackingNumber);
+
+                var searchButton = driver.FindElement(By.Id("searchButton"));
+                searchButton.Click();
+
+                await Task.Delay(2000); 
+
+                var statusElement = driver.FindElement(By.XPath("//div[@class='col-8']//span"));
+
+                return statusElement.Text;
             }
-            var responseBody = await response.Content.ReadAsStringAsync();
-
-            var htmlDoc = new HtmlDocument();
-            htmlDoc.LoadHtml(responseBody);
-
-            var deliveredNode = htmlDoc.DocumentNode.SelectSingleNode("//span[text()='TESLİM EDİLDİ']");
-            if (deliveredNode != null)
+            catch (NoSuchElementException ex)
             {
-                return "TESLİM EDİLDİ";
+                return "Girilen Takip Numarasına Ait Sonuç Bulunamadı. KAYIT YOK";
             }
-               
-            var notDeliveredNode = htmlDoc.DocumentNode.SelectSingleNode("//span[text()='TESLİM EDİLEMEDİ']");
-            if (notDeliveredNode != null)
+            finally
             {
-                return "TESLİM EDİLEMEDİ";
+                driver.Quit();
             }
-
-            var errorNode = htmlDoc.DocumentNode.SelectSingleNode("//div[@class='alert alert-warning' and contains(text(), 'Girilen Takip Numarasına Ait Sonuç Bulunamadı')]");
-            if (errorNode != null)
-                return "KAYIT YOK";
-
-            return "Unknown status.";
-
         }
 
     }

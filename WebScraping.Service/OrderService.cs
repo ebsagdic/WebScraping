@@ -76,24 +76,5 @@ namespace WebScraping.Service
             return CustomResponseDto<NoContentDto>.Success(204);
 
         }
-
-        public async Task<CustomResponseDto<NoContentDto>> Update(OrderDto orderDto)
-        {
-            Order order = _mapper.Map<Order>(orderDto);
-            var isExistEntity = await _orderRepository.GetByIdAsync(order.Id);
-            if (isExistEntity == null)
-            {
-                var errors = new List<string>();
-                errors.Add("Id'ye ait güncellenceck ürün bulunamadı.");
-                return CustomResponseDto<NoContentDto>.Fail(404, errors);
-            }
-            isExistEntity.TrackingNo = orderDto.TrackingNo;
-            isExistEntity.Status = orderDto.Status;
-            isExistEntity.UpdatedDate = DateTime.Now;
-
-            _orderRepository.Update(isExistEntity);
-            await _unitOfWork.CommitAsync();
-            return CustomResponseDto<NoContentDto>.Success(204);
-        }
     }
 }
